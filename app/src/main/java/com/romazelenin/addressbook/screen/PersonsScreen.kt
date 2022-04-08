@@ -27,6 +27,8 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.romazelenin.addressbook.MainViewModel
 import com.romazelenin.addressbook.R
 import com.romazelenin.addressbook.domain.entity.Department
@@ -154,50 +156,110 @@ fun PersonsScreen(viewModel: MainViewModel) {
             }
         }
     }) {
+        val swipeRefreshState = rememberSwipeRefreshState(users is State.Loading)
+
         HorizontalPager(
             count = pages.size,
             state = pagerState
         ) { page ->
-            when (users) {
-                is State.Failed -> {}
-                is State.Loading -> {}
-                is State.Success -> {
-                    val filteredUsers = if (pages[page].first != Department.all) {
-                        (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
-                    } else {
-                        (users as State.Success<List<User>>).data
-                    }
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(filteredUsers) {
-                            ListItem(
-                                modifier = Modifier.clickable {  },
-                                icon = {
-                                    AsyncImage(
-                                        model = ImageRequest.Builder(LocalContext.current)
-                                            .data(it.avatarUrl)
-                                            .crossfade(true)
-                                            .build(),
-                                        placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                        error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                        contentDescription = null
-                                    )
-                                },
-                                secondaryText = {
-                                    Text(
-                                        text = it.position,
-                                        color = Color.Gray
-                                    )
-                                }
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = "${it.firstName} ${it.lastName}",
-                                        color = Color.Black
-                                    )
-                                    Spacer(modifier = Modifier.width(2.dp))
-                                    Text(text = it.userTag.lowercase(), color = Color.LightGray, fontSize = 12.sp)
+            SwipeRefresh(state = swipeRefreshState, onRefresh = { viewModel.refresh() }) {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    when (users) {
+                        is State.Failed -> {}
+                        is State.Loading -> {
+                            /*  var visibilityShimmer = true
+                              items(5) {
+                                   ListItem(
+                                       icon = {
+                                           AsyncImage(
+                                               modifier = Modifier.placeholder(
+                                                   visible = visibilityShimmer,
+                                                   highlight = PlaceholderHighlight.shimmer(),
+                                               ),
+                                               model = null,
+                                               placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                               error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                               contentDescription = null
+                                           )
+                                       },
+                                       secondaryText = {
+                                           Text(
+                                               modifier = Modifier.placeholder(
+                                                   visible = visibilityShimmer,
+                                                   highlight = PlaceholderHighlight.shimmer(),
+                                               ),
+                                               text = "Content to display",
+                                               color = Color.Gray
+                                           )
+                                       }
+                                   ) {
+                                       Row(verticalAlignment = Alignment.CenterVertically) {
+                                           Text(
+                                               modifier = Modifier.placeholder(
+                                                   visible = visibilityShimmer,
+                                                   highlight = PlaceholderHighlight.shimmer(),
+                                               ),
+                                               text = "Content to display after content has loaded",
+                                               color = Color.Black
+                                           )
+                                           Spacer(modifier = Modifier.width(2.dp))
+                                           Text(
+                                               modifier = Modifier.placeholder(
+                                                   visible = visibilityShimmer,
+                                                   highlight = PlaceholderHighlight.shimmer(),
+                                               ),
+                                               text = "Content to display after content has loaded",
+                                               color = Color.LightGray,
+                                               fontSize = 12.sp
+                                           )
+                                       }
+
+                                   }
+
+                              }*/
+                        }
+                        is State.Success -> {
+                            val filteredUsers = if (pages[page].first != Department.all) {
+                                (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
+                            } else {
+                                (users as State.Success<List<User>>).data
+                            }
+                            items(filteredUsers) {
+                                ListItem(
+                                    modifier = Modifier.clickable { },
+                                    icon = {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(LocalContext.current)
+                                                .data(it.avatarUrl)
+                                                .crossfade(true)
+                                                .build(),
+                                            placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                            error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                            contentDescription = null
+                                        )
+                                    },
+                                    secondaryText = {
+                                        Text(
+                                            text = it.position,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "${it.firstName} ${it.lastName}",
+                                            color = Color.Black
+                                        )
+                                        Spacer(modifier = Modifier.width(2.dp))
+                                        Text(
+                                            text = it.userTag.lowercase(),
+                                            color = Color.LightGray,
+                                            fontSize = 12.sp
+                                        )
+                                    }
                                 }
                             }
+
                         }
                     }
                 }
