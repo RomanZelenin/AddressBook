@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">Address Book</string>
+    <string name="search_placeholder_text">Введите имя, тег, почту&#8230;</string>
+
+    <string-array name="departments">
+        <item>All</item>
+        <item>Android</item>
+        <item>iOS</item>
+        <item>Design</item>
+        <item>Management</item>
+        <item>QA</item>
+        <item>Back Office</item>
+        <item>HR</item>
+        <item>PR</item>
+        <item>Backend</item>
+        <item>Support</item>
+        <item>Analytics</item>
+    </string-array>
 </resources>

@@ -6,7 +6,7 @@ data class User(
     val firstName: String,
     val lastName: String,
     val userTag: String,
-    val department: String,
+    val department: Department,
     val position: String,
     val birthday: String
 )
