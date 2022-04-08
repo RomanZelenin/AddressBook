@@ -1,6 +1,9 @@
 package com.romazelenin.addressbook.screen
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -9,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -19,11 +23,14 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.romazelenin.addressbook.MainViewModel
 import com.romazelenin.addressbook.R
+import com.romazelenin.addressbook.getAge
+import com.romazelenin.addressbook.parsingDate
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 
 @Composable
-fun DetailsScreen(navController: NavController, userId:String, viewModel: MainViewModel) {
-   val user by viewModel.getUser(userId).collectAsState(initial = null)
+fun DetailsScreen(navController: NavController, userId: String, viewModel: MainViewModel) {
+    val context = LocalContext.current
+    val user by viewModel.getUser(userId).collectAsState(initial = null)
     Column() {
         Column(
             modifier = Modifier.background(MaterialTheme.colors.surface),
@@ -33,7 +40,8 @@ fun DetailsScreen(navController: NavController, userId:String, viewModel: MainVi
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_left_24),
-                        contentDescription = null
+                        contentDescription = null,
+                        tint = Color.Black
                     )
                 }
             }, title = {}, backgroundColor = MaterialTheme.colors.surface)
@@ -45,24 +53,50 @@ fun DetailsScreen(navController: NavController, userId:String, viewModel: MainVi
                 error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "${user?.firstName} ${user?.lastName}", fontWeight = FontWeight.Bold, fontSize = 24.sp)
+                Text(
+                    text = "${user?.firstName} ${user?.lastName}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp
+                )
                 Spacer(modifier = Modifier.width(2.dp))
-                Text(text = "${user?.userTag?.lowercase()}", color = Color.LightGray, fontSize = 17.sp)
+                Text(
+                    text = "${user?.userTag?.lowercase()}",
+                    color = Color.LightGray,
+                    fontSize = 17.sp
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(text = "${user?.position}", fontSize = 13.sp)
             Spacer(modifier = Modifier.height(16.dp))
         }
-        Row(modifier=Modifier.padding(16.dp)) {
+        Row(modifier = Modifier.padding(16.dp)) {
             Icon(painter = painterResource(id = R.drawable.star), contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "${user?.birthday}")
-            Text(modifier = Modifier.weight(1f), text = "30 лет", textAlign = TextAlign.End, color = Color.Gray)
+            user?.birthday?.let {
+                Text(text = parsingDate(it))
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = "${getAge(it)} лет",
+                    textAlign = TextAlign.End,
+                    color = Color.Gray
+                )
+            }
+
         }
-        Row(modifier=Modifier.padding(16.dp)) {
+        Row(modifier = Modifier.padding(16.dp)) {
             Icon(painter = painterResource(id = R.drawable.phone), contentDescription = null)
             Spacer(modifier = Modifier.width(12.dp))
-            Text(text = "${user?.phone}")
+            Text(
+                modifier = Modifier.clickable {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_DIAL,
+                            Uri.parse("tel:${user?.phone}")
+                        )
+                    )
+                },
+                text = "${user?.phone}"
+            )
         }
     }
 
