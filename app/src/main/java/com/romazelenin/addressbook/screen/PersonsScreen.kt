@@ -232,7 +232,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             }
                             items(filteredUsers) {
                                 ListItem(
-                                    modifier = Modifier.clickable { navController.navigate("details") },
+                                    modifier = Modifier.clickable { navController.navigate("details/${it.id}") },
                                     icon = {
                                         AsyncImage(
                                             model = ImageRequest.Builder(LocalContext.current)

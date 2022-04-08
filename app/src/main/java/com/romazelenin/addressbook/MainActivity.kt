@@ -4,9 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.romazelenin.addressbook.screen.DetailsScreen
 import com.romazelenin.addressbook.screen.ErrorScreen
 import com.romazelenin.addressbook.screen.PersonsScreen
@@ -32,8 +34,15 @@ class MainActivity : ComponentActivity() {
                     composable("error") {
                         ErrorScreen(navController = navController, viewModel = viewModel)
                     }
-                    composable("details"){
-                        DetailsScreen(navController = navController)
+                    composable(
+                        "details/{userId}",
+                        arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        DetailsScreen(
+                            navController = navController,
+                            userId = backStackEntry.arguments!!.getString("userId")!!,
+                            viewModel = viewModel
+                        )
                     }
                 }
             }

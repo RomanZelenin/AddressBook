@@ -6,8 +6,7 @@ import com.romazelenin.addressbook.domain.UsersServiceApi
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,9 +17,11 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
     private val _usersStateFlow = MutableStateFlow<State<List<User>>>(State.Loading())
     val users: Flow<State<List<User>>> = _usersStateFlow
 
-    init { refresh() }
+    init {
+        refresh()
+    }
 
-    fun refresh(){
+    fun refresh() {
         viewModelScope.launch {
             try {
                 _usersStateFlow.value = State.Loading()
@@ -30,6 +31,10 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
                 _usersStateFlow.value = State.Failed(e, null)
             }
         }
+    }
+
+    fun getUser(userId: String): Flow<User?> {
+        return users.map { (it as State.Success).data.firstOrNull { it.id == userId } }
     }
 
 }
