@@ -2,18 +2,17 @@
     <string name="app_name">Address Book</string>
     <string name="search_placeholder_text">Введите имя, тег, почту&#8230;</string>
 
-    <string-array name="departments">
-        <item>All</item>
-        <item>Android</item>
-        <item>iOS</item>
-        <item>Design</item>
-        <item>Management</item>
-        <item>QA</item>
-        <item>Back Office</item>
-        <item>HR</item>
-        <item>PR</item>
-        <item>Backend</item>
-        <item>Support</item>
-        <item>Analytics</item>
-    </string-array>
+    <string name="android">Android</string>
+    <string name="ios">iOS</string>
+    <string name="design">Design</string>
+    <string name="management">Management</string>
+    <string name="qa">QA</string>
+    <string name="back_office">Back Office</string>
+    <string name="hr">HR</string>
+    <string name="pr">PR</string>
+    <string name="backend">Backend</string>
+    <string name="support">Support</string>
+    <string name="analytics">Analytics</string>
+    <string name="all">All</string>
+    <string name="frontend">Frontend</string>
 </resources>

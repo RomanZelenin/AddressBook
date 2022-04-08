@@ -1,7 +1,10 @@
 package com.romazelenin.addressbook.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -11,32 +14,57 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.romazelenin.addressbook.MainViewModel
 import com.romazelenin.addressbook.R
+import com.romazelenin.addressbook.domain.entity.Department
+import com.romazelenin.addressbook.domain.entity.State
+import com.romazelenin.addressbook.domain.entity.User
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 import com.romazelenin.addressbook.ui.theme.Gray
 
+
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun PersonsScreen(/*viewModel: MainViewModel*/) {
+fun PersonsScreen(viewModel: MainViewModel) {
     val pagerState = rememberPagerState()
-    val pages = stringArrayResource(id = R.array.departments)
+    val focusRequester = remember { FocusRequester() }
+
+    val pages = listOf(
+        Department.all to stringResource(id = R.string.all),
+        Department.android to stringResource(id = R.string.android),
+        Department.design to stringResource(id = R.string.design),
+        Department.analytics to stringResource(id = R.string.analytics),
+        Department.backend to stringResource(id = R.string.backend),
+        Department.back_office to stringResource(id = R.string.back_office),
+        Department.frontend to stringResource(id = R.string.frontend),
+        Department.hr to stringResource(id = R.string.hr),
+        Department.ios to stringResource(id = R.string.ios),
+        Department.management to stringResource(id = R.string.management),
+        Department.pr to stringResource(id = R.string.pr),
+        Department.qa to stringResource(id = R.string.qa),
+        Department.support to stringResource(id = R.string.support)
+    )
+
+    val users by viewModel.users.collectAsState(initial = State.Loading())
 
     Scaffold(topBar = {
         Column {
             TopAppBar() {
-                val focusRequester = remember { FocusRequester() }
+
                 var searchIsFocused by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
 
@@ -117,7 +145,7 @@ fun PersonsScreen(/*viewModel: MainViewModel*/) {
                     ) {
                         Text(
                             modifier = Modifier.padding(8.dp),
-                            text = department,
+                            text = department.second,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp
                         )
@@ -130,9 +158,50 @@ fun PersonsScreen(/*viewModel: MainViewModel*/) {
             count = pages.size,
             state = pagerState
         ) { page ->
-
-            Text(modifier = Modifier.fillMaxSize(), text = page.toString())
-
+            when (users) {
+                is State.Failed -> {}
+                is State.Loading -> {}
+                is State.Success -> {
+                    val filteredUsers = if (pages[page].first != Department.all) {
+                        (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
+                    } else {
+                        (users as State.Success<List<User>>).data
+                    }
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(filteredUsers) {
+                            ListItem(
+                                modifier = Modifier.clickable {  },
+                                icon = {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(it.avatarUrl)
+                                            .crossfade(true)
+                                            .build(),
+                                        placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                        error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                        contentDescription = null
+                                    )
+                                },
+                                secondaryText = {
+                                    Text(
+                                        text = it.position,
+                                        color = Color.Gray
+                                    )
+                                }
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "${it.firstName} ${it.lastName}",
+                                        color = Color.Black
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(text = it.userTag.lowercase(), color = Color.LightGray, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -141,6 +210,6 @@ fun PersonsScreen(/*viewModel: MainViewModel*/) {
 @Composable
 fun PersonsScreenPreview() {
     AddressBookTheme {
-        PersonsScreen()
+        //PersonsScreen()
     }
 }
