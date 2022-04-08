@@ -62,6 +62,9 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager:$accompanist_version"
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
 
+    //System UI
+    implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
+
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
     implementation 'androidx.activity:activity-compose:1.4.0'
