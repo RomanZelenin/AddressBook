@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.pager.ExperimentalPagerApi
@@ -41,7 +42,7 @@ import com.romazelenin.addressbook.ui.theme.Gray
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 @Composable
-fun PersonsScreen(viewModel: MainViewModel) {
+fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     val pagerState = rememberPagerState()
     val focusRequester = remember { FocusRequester() }
 
@@ -165,7 +166,11 @@ fun PersonsScreen(viewModel: MainViewModel) {
             SwipeRefresh(state = swipeRefreshState, onRefresh = { viewModel.refresh() }) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     when (users) {
-                        is State.Failed -> {}
+                        is State.Failed -> {
+                            navController.navigate("error"){
+                                launchSingleTop = true
+                            }
+                        }
                         is State.Loading -> {
                             /*  var visibilityShimmer = true
                               items(5) {

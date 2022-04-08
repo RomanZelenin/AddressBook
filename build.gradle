@@ -5,6 +5,8 @@ buildscript {
         retrofit_version = '2.9.0'
         accompanist_version = '0.24.6-alpha'
         coil_version = '2.0.0-rc02'
+        nav_version = '2.4.2'
+
     }
 
     dependencies {
