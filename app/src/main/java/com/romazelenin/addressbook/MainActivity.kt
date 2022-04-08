@@ -7,6 +7,7 @@ import androidx.activity.viewModels
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.romazelenin.addressbook.screen.DetailsScreen
 import com.romazelenin.addressbook.screen.ErrorScreen
 import com.romazelenin.addressbook.screen.PersonsScreen
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
@@ -30,6 +31,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("error") {
                         ErrorScreen(navController = navController, viewModel = viewModel)
+                    }
+                    composable("details"){
+                        DetailsScreen(navController = navController)
                     }
                 }
             }

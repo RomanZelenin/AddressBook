@@ -78,7 +78,8 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp), shape = RoundedCornerShape(36.dp)
+                            .height(40.dp),
+                        shape = RoundedCornerShape(36.dp)
                     ) {}
                     TextField(
                         modifier = Modifier
@@ -231,7 +232,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             }
                             items(filteredUsers) {
                                 ListItem(
-                                    modifier = Modifier.clickable { },
+                                    modifier = Modifier.clickable { navController.navigate("details") },
                                     icon = {
                                         AsyncImage(
                                             model = ImageRequest.Builder(LocalContext.current)
