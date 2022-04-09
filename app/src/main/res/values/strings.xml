@@ -16,4 +16,6 @@
     <string name="all">All</string>
     <string name="frontend">Frontend</string>
     <string name="sorting">Сортировка</string>
+    <string name="alphabetically">По алфавиту</string>
+    <string name="by_birthday">По дню рождения</string>
 </resources>

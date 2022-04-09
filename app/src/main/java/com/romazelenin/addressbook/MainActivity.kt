@@ -4,10 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.RadioButton
@@ -77,7 +75,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         bottomSheet("sorting") {
-                            LaunchedEffect(bottomSheetNavigator){
+                            LaunchedEffect(bottomSheetNavigator) {
                                 viewModel.sortedUsers(Sort.alphabet)
                             }
                             Column(
@@ -90,6 +88,7 @@ class MainActivity : ComponentActivity() {
                                     painter = painterResource(id = R.drawable.sheet_line),
                                     contentDescription = null
                                 )
+                                Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = getString(R.string.sorting),
                                     fontSize = 20.sp,
@@ -97,29 +96,44 @@ class MainActivity : ComponentActivity() {
                                     color = Color.Black
                                 )
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedSortedState = true
+                                            viewModel.sortedUsers(Sort.alphabet)
+                                        }
+                                        .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
                                         selected = selectedSortedState,
-                                        onClick = {
-                                            selectedSortedState = true
-                                            viewModel.sortedUsers(Sort.alphabet)
-                                        },
+                                        onClick = null
                                     )
-                                    Text(text = "По алфавиту", color = Color.Black)
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(
+                                        text = getString(R.string.alphabetically),
+                                        color = Color.Black
+                                    )
                                 }
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedSortedState = false
+                                            viewModel.sortedUsers(Sort.birthaday)
+                                        }
+                                        .padding(16.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     RadioButton(
                                         selected = !selectedSortedState,
-                                        onClick = {
-                                            selectedSortedState = false
-                                            viewModel.sortedUsers(Sort.birthaday)
-                                        })
-                                    Text(text = "По дню рождения", color = Color.Black)
+                                        onClick = null
+                                    )
+                                    Spacer(modifier = Modifier.width(2.dp))
+                                    Text(
+                                        text = getString(R.string.by_birthday),
+                                        color = Color.Black
+                                    )
                                 }
                             }
                         }
