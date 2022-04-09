@@ -68,13 +68,12 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
         )
     }
     val users by viewModel.users.collectAsState(initial = State.Loading())
+    var query by remember { mutableStateOf("") }
 
     Scaffold(topBar = {
         Column {
             TopAppBar() {
                 var searchIsFocused by remember { mutableStateOf(false) }
-                var query by remember { mutableStateOf("") }
-
                 Box(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center
@@ -235,11 +234,20 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                               }*/
                         }
                         is State.Success -> {
-                            val filteredUsers = if (pages[page].first != Department.all) {
+                            var filteredUsers = if (pages[page].first != Department.all) {
                                 (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
                             } else {
                                 (users as State.Success<List<User>>).data
                             }
+
+                            if (query.isNotEmpty()) {
+                                val clearedQuery = query.trimEnd()
+                                filteredUsers = filteredUsers.filter {
+                                    (it.firstName + " " + it.lastName).contains(clearedQuery, true) ||
+                                            it.userTag.contains(clearedQuery, true)
+                                }
+                            }
+
                             items(filteredUsers) {
                                 ListItem(
                                     modifier = Modifier.clickable { navController.navigate("details/${it.id}") },
