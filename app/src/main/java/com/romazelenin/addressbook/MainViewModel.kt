@@ -37,4 +37,21 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
         return users.map { (it as State.Success).data.firstOrNull { it.id == userId } }
     }
 
+    fun sortedUsers(sort: Sort) {
+        viewModelScope.launch {
+            when (sort) {
+                Sort.birthaday -> {}
+                Sort.alphabet -> {
+                    val sortedListUsers = users.map { (it as State.Success).data }.first()
+                        .sortedBy { it.firstName + " " + it.lastName }
+                    _usersStateFlow.value = State.Success(sortedListUsers)
+                }
+            }
+        }
+    }
+
+}
+
+enum class Sort {
+    birthaday, alphabet
 }

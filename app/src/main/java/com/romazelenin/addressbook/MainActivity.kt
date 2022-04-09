@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -76,6 +77,9 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         bottomSheet("sorting") {
+                            LaunchedEffect(bottomSheetNavigator){
+                                viewModel.sortedUsers(Sort.alphabet)
+                            }
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -98,7 +102,10 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     RadioButton(
                                         selected = selectedSortedState,
-                                        onClick = { selectedSortedState = true },
+                                        onClick = {
+                                            selectedSortedState = true
+                                            viewModel.sortedUsers(Sort.alphabet)
+                                        },
                                     )
                                     Text(text = "По алфавиту", color = Color.Black)
                                 }
@@ -108,7 +115,10 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     RadioButton(
                                         selected = !selectedSortedState,
-                                        onClick = { selectedSortedState = false })
+                                        onClick = {
+                                            selectedSortedState = false
+                                            viewModel.sortedUsers(Sort.birthaday)
+                                        })
                                     Text(text = "По дню рождения", color = Color.Black)
                                 }
                             }
