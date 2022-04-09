@@ -15,4 +15,5 @@
     <string name="analytics">Analytics</string>
     <string name="all">All</string>
     <string name="frontend">Frontend</string>
+    <string name="sorting">Сортировка</string>
 </resources>

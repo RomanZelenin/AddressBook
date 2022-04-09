@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -37,6 +38,7 @@ import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 import com.romazelenin.addressbook.ui.theme.Gray
+import com.romazelenin.addressbook.ui.theme.Purple500
 import kotlinx.coroutines.launch
 
 
@@ -44,9 +46,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
 @Composable
 fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
+
     val pagerState = rememberPagerState()
     val focusRequester = remember { FocusRequester() }
-
     val context = LocalContext.current
     val pages = remember {
         listOf(
@@ -65,13 +67,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
             Department.support to context.getString(R.string.support)
         )
     }
-
     val users by viewModel.users.collectAsState(initial = State.Loading())
 
     Scaffold(topBar = {
         Column {
             TopAppBar() {
-
                 var searchIsFocused by remember { mutableStateOf(false) }
                 var query by remember { mutableStateOf("") }
 
@@ -100,12 +100,17 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             )
                         },
                         trailingIcon = {
+                            var sortingIsClicked by rememberSaveable { mutableStateOf(false) }
                             if (!searchIsFocused) {
-                                IconButton(onClick = { /*TODO*/ }) {
+                                IconButton(onClick = {
+                                    sortingIsClicked = true
+                                    navController.navigate("sorting")
+                                }) {
                                     Icon(
                                         modifier = Modifier.offset(y = 5.dp),
                                         painter = painterResource(id = R.drawable.sorted_list),
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        tint = if (sortingIsClicked) Purple500 else Color.Unspecified
                                     )
                                 }
                             } else {
