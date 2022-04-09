@@ -1,6 +1,7 @@
 package com.romazelenin.addressbook.screen
 
 import android.annotation.SuppressLint
+import android.view.MotionEvent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,12 +11,13 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,12 +45,11 @@ import kotlinx.coroutines.launch
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
 
     val pagerState = rememberPagerState()
-    val focusRequester = remember { FocusRequester() }
     val context = LocalContext.current
     val pages = remember {
         listOf(
@@ -69,11 +70,12 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     }
     val users by viewModel.users.collectAsState(initial = State.Loading())
     var query by remember { mutableStateOf("") }
+    var searchIsFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     Scaffold(topBar = {
         Column {
             TopAppBar() {
-                var searchIsFocused by remember { mutableStateOf(false) }
                 Box(
                     modifier = Modifier.padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center
@@ -87,10 +89,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                     TextField(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(focusRequester)
-                            .onFocusEvent {
-                                searchIsFocused = it.isFocused
-                            },
+                            .onFocusEvent { searchIsFocused = it.isFocused },
                         leadingIcon = {
                             Icon(
                                 painter = painterResource(id = R.drawable.search),
@@ -170,6 +169,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
         val swipeRefreshState = rememberSwipeRefreshState(users is State.Loading)
 
         HorizontalPager(
+            modifier = Modifier.motionEventSpy {
+                if (it.action == MotionEvent.ACTION_DOWN) {
+                    focusManager.clearFocus()
+                }
+            },
             count = pages.size,
             state = pagerState
         ) { page ->
@@ -243,7 +247,10 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             if (query.isNotEmpty()) {
                                 val clearedQuery = query.trimEnd()
                                 filteredUsers = filteredUsers.filter {
-                                    (it.firstName + " " + it.lastName).contains(clearedQuery, true) ||
+                                    (it.firstName + " " + it.lastName).contains(
+                                        clearedQuery,
+                                        true
+                                    ) ||
                                             it.userTag.contains(clearedQuery, true)
                                 }
                             }
