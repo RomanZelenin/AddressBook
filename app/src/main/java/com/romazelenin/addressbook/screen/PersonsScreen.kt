@@ -37,6 +37,7 @@ import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 import com.romazelenin.addressbook.ui.theme.Gray
+import kotlinx.coroutines.launch
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -46,21 +47,24 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     val pagerState = rememberPagerState()
     val focusRequester = remember { FocusRequester() }
 
-    val pages = listOf(
-        Department.all to stringResource(id = R.string.all),
-        Department.android to stringResource(id = R.string.android),
-        Department.design to stringResource(id = R.string.design),
-        Department.analytics to stringResource(id = R.string.analytics),
-        Department.backend to stringResource(id = R.string.backend),
-        Department.back_office to stringResource(id = R.string.back_office),
-        Department.frontend to stringResource(id = R.string.frontend),
-        Department.hr to stringResource(id = R.string.hr),
-        Department.ios to stringResource(id = R.string.ios),
-        Department.management to stringResource(id = R.string.management),
-        Department.pr to stringResource(id = R.string.pr),
-        Department.qa to stringResource(id = R.string.qa),
-        Department.support to stringResource(id = R.string.support)
-    )
+    val context = LocalContext.current
+    val pages = remember {
+        listOf(
+            Department.all to context.getString(R.string.all),
+            Department.android to context.getString(R.string.android),
+            Department.design to context.getString(R.string.design),
+            Department.analytics to context.getString(R.string.analytics),
+            Department.backend to context.getString(R.string.backend),
+            Department.back_office to context.getString(R.string.back_office),
+            Department.frontend to context.getString(R.string.frontend),
+            Department.hr to context.getString(R.string.hr),
+            Department.ios to context.getString(R.string.ios),
+            Department.management to context.getString(R.string.management),
+            Department.pr to context.getString(R.string.pr),
+            Department.qa to context.getString(R.string.qa),
+            Department.support to context.getString(R.string.support)
+        )
+    }
 
     val users by viewModel.users.collectAsState(initial = State.Loading())
 
@@ -138,11 +142,12 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                         Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
                     )
                 }) {
+                val scope = rememberCoroutineScope()
                 pages.forEachIndexed { index, department ->
                     Tab(
                         selected = pagerState.currentPage == index,
                         onClick = {
-                            //pagerState.animateScrollToPage(page = index)
+                            scope.launch { pagerState.scrollToPage(page = index) }
                         },
                         selectedContentColor = Color.Black,
                         unselectedContentColor = Gray
@@ -168,7 +173,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     when (users) {
                         is State.Failed -> {
-                            navController.navigate("error"){
+                            navController.navigate("error") {
                                 launchSingleTop = true
                             }
                         }
