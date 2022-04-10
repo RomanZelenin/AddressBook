@@ -23,4 +23,6 @@
     <string name="repeat_attempt">Попробовать снова</string>
     <string name="fast_fix">Постараемся быстро починить</string>
     <string name="crash">Какой-то сверхразум все сломал</string>
+    <string name="empty_search_results">Мы никого не нашли</string>
+    <string name="correct_query">Попробуйте скорректировать запрос</string>
 </resources>

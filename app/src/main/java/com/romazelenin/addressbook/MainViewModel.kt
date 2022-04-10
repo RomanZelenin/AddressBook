@@ -54,6 +54,7 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
     fun sortedUsers(sort: Sort) {
         if (currentTypeSort == sort) return
         currentTypeSort = sort
+
         viewModelScope.launch {
             if (_usersStateFlow.value is State.Success) {
                 when (sort) {

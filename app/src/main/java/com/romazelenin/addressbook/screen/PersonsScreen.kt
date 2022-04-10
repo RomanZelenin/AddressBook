@@ -3,6 +3,7 @@ package com.romazelenin.addressbook.screen
 import android.annotation.SuppressLint
 import android.view.MotionEvent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -308,35 +309,42 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 }
                             }
 
-                            when (viewModel.getCurrentSort()) {
-                                Sort.birthaday -> {
-                                    TODO()
-                                }
-                                Sort.alphabet -> {
-                                    filteredUsers.groupBy { it.firstName.uppercase().first() }
-                                        .forEach { entry ->
-                                            stickyHeader {
-                                                Text(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(
-                                                            horizontal = 16.dp,
-                                                            vertical = 8.dp
-                                                        ),
-                                                    text = (entry.key.toString()),
-                                                    textAlign = TextAlign.End,
-                                                    fontSize = 18.sp,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
+                            if (filteredUsers.isEmpty()) {
+                                item { EmptyResultPage() }
+                            } else {
+                                when (viewModel.getCurrentSort()) {
+                                    Sort.birthaday -> {
+                                        TODO()
+                                    }
+                                    Sort.alphabet -> {
+                                        filteredUsers.groupBy { it.firstName.uppercase().first() }
+                                            .forEach { entry ->
+                                                stickyHeader {
+                                                    Text(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(
+                                                                horizontal = 16.dp,
+                                                                vertical = 8.dp
+                                                            ),
+                                                        text = (entry.key.toString()),
+                                                        textAlign = TextAlign.End,
+                                                        fontSize = 18.sp,
+                                                        fontWeight = FontWeight.SemiBold
+                                                    )
+                                                }
+                                                itemsIndexed(entry.value) { index, item ->
+                                                    UserItem(
+                                                        navController = navController,
+                                                        user = item
+                                                    )
+                                                }
                                             }
-                                            itemsIndexed(entry.value) { index, item ->
-                                                UserItem(navController = navController, user = item)
-                                            }
+                                    }
+                                    Sort.none -> {
+                                        items(filteredUsers) {
+                                            UserItem(navController = navController, user = it)
                                         }
-                                }
-                                Sort.none -> {
-                                    items(filteredUsers) {
-                                        UserItem(navController = navController, user = it)
                                     }
                                 }
                             }
@@ -348,6 +356,33 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     }
 }
 
+@Composable
+private fun EmptyResultPage(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxSize().padding(top = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Image(
+            modifier = Modifier.size(54.dp),
+            painter = painterResource(id = R.drawable.left_pointing_magnifying_glass),
+            contentDescription = null
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.empty_search_results),
+            fontWeight = FontWeight.SemiBold,
+            color = Color.Black,
+            fontSize = 17.sp
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = stringResource(R.string.correct_query),
+            color = Color.LightGray,
+            fontSize = 16.sp
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
