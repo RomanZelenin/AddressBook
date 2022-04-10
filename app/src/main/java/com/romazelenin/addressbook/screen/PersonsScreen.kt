@@ -2,10 +2,7 @@ package com.romazelenin.addressbook.screen
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.motionEventSpy
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -319,12 +318,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                             ((birthday.month <= dateNow.month && birthday.date < dateNow.date) || (birthday.month < dateNow.month))
                                         }
                                         itemsIndexed(filteredUsers) { index, item ->
-                                            Column() {
+                                            Column {
                                                 if (indexNextYear == index) {
-                                                    Text(
-                                                        text = "${getNextYear()}",
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        textAlign = TextAlign.Center
+                                                    YearDivider(
+                                                        modifier = Modifier.height(68.dp),
+                                                        year = getNextYear().toString()
                                                     )
                                                 }
                                                 UserItem(
@@ -372,6 +370,47 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun YearDivider(modifier: Modifier = Modifier, year: String) {
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
+        Canvas(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            drawLine(
+                cap = StrokeCap.Round,
+                color = Color.LightGray,
+                start = Offset(
+                    x = 42f,
+                    y = center.y
+                ),
+                end = Offset(
+                    x = center.x / 2,
+                    y = center.y
+                ),
+                strokeWidth = 6f
+            )
+            drawLine(
+                cap = StrokeCap.Round,
+                color = Color.LightGray,
+                start = Offset(
+                    x = center.x + center.x / 2,
+                    y = center.y
+                ),
+                end = Offset(
+                    x = size.width - 42f,
+                    y = center.y
+                ),
+                strokeWidth = 6f
+            )
+        }
+        Text(
+            text = year,
+            textAlign = TextAlign.Center,
+            color = Color.LightGray
+        )
     }
 }
 
