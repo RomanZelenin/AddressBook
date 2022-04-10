@@ -2,11 +2,13 @@ package com.romazelenin.addressbook.screen
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -22,6 +24,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,6 +42,7 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.romazelenin.addressbook.MainViewModel
 import com.romazelenin.addressbook.R
+import com.romazelenin.addressbook.Sort
 import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
@@ -48,7 +52,10 @@ import kotlinx.coroutines.launch
 
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@OptIn(ExperimentalPagerApi::class, ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+@OptIn(
+    ExperimentalPagerApi::class, ExperimentalComposeUiApi::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
 
@@ -301,38 +308,35 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 }
                             }
 
-                            items(filteredUsers) {
-                                ListItem(
-                                    modifier = Modifier.clickable { navController.navigate("details/${it.id}") },
-                                    icon = {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(LocalContext.current)
-                                                .data(it.avatarUrl)
-                                                .crossfade(true)
-                                                .build(),
-                                            placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                            error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                            contentDescription = null
-                                        )
-                                    },
-                                    secondaryText = {
-                                        Text(
-                                            text = it.position,
-                                            color = Color.Gray
-                                        )
-                                    }
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = "${it.firstName} ${it.lastName}",
-                                            color = MaterialTheme.colors.onSurface
-                                        )
-                                        Spacer(modifier = Modifier.width(2.dp))
-                                        Text(
-                                            text = it.userTag.lowercase(),
-                                            color = Color.LightGray,
-                                            fontSize = 12.sp
-                                        )
+                            when (viewModel.getCurrentSort()) {
+                                Sort.birthaday -> {
+                                    TODO()
+                                }
+                                Sort.alphabet -> {
+                                    filteredUsers.groupBy { it.firstName.uppercase().first() }
+                                        .forEach { entry ->
+                                            stickyHeader {
+                                                Text(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = 16.dp,
+                                                            vertical = 8.dp
+                                                        ),
+                                                    text = (entry.key.toString()),
+                                                    textAlign = TextAlign.End,
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                            itemsIndexed(entry.value) { index, item ->
+                                                UserItem(navController = navController, user = item)
+                                            }
+                                        }
+                                }
+                                Sort.none -> {
+                                    items(filteredUsers) {
+                                        UserItem(navController = navController, user = it)
                                     }
                                 }
                             }
@@ -340,6 +344,45 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                     }
                 }
             }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun UserItem(modifier: Modifier = Modifier, navController: NavController, user: User) {
+    ListItem(
+        modifier = modifier.clickable { navController.navigate("details/${user.id}") },
+        icon = {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(user.avatarUrl)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                contentDescription = null
+            )
+        },
+        secondaryText = {
+            Text(
+                text = user.position,
+                color = Color.Gray
+            )
+        }
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "${user.firstName} ${user.lastName}",
+                color = MaterialTheme.colors.onSurface
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Text(
+                text = user.userTag.lowercase(),
+                color = Color.LightGray,
+                fontSize = 12.sp
+            )
         }
     }
 }
