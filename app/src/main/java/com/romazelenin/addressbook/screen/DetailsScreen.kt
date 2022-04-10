@@ -31,20 +31,26 @@ import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 fun DetailsScreen(navController: NavController, userId: String, viewModel: MainViewModel) {
     val context = LocalContext.current
     val user by viewModel.getUser(userId).collectAsState(initial = null)
-    Column() {
+
+    Column(modifier = Modifier
+        .background(MaterialTheme.colors.surface)
+        .fillMaxSize()) {
         Column(
-            modifier = Modifier.background(MaterialTheme.colors.surface),
+            modifier = Modifier.background(MaterialTheme.colors.primaryVariant),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            TopAppBar(elevation = 0.dp, navigationIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_left_24),
-                        contentDescription = null,
-                        tint = Color.Black
-                    )
-                }
-            }, title = {}, backgroundColor = MaterialTheme.colors.surface)
+            TopAppBar(
+                elevation = 0.dp,
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_left_24),
+                            contentDescription = null,
+                            tint = MaterialTheme.colors.onBackground
+                        )
+                    }
+                }, title = {}, backgroundColor = MaterialTheme.colors.primaryVariant
+            )
             AsyncImage(
                 modifier = Modifier.size(104.dp),
                 model = "",
@@ -54,6 +60,7 @@ fun DetailsScreen(navController: NavController, userId: String, viewModel: MainV
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
+                    color = MaterialTheme.colors.onSecondary,
                     text = "${user?.firstName} ${user?.lastName}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp
@@ -66,14 +73,22 @@ fun DetailsScreen(navController: NavController, userId: String, viewModel: MainV
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(text = "${user?.position}", fontSize = 13.sp)
+            Text(
+                text = "${user?.position}",
+                fontSize = 13.sp,
+                color = MaterialTheme.colors.onSecondary,
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
         Row(modifier = Modifier.padding(16.dp)) {
-            Icon(painter = painterResource(id = R.drawable.star), contentDescription = null)
+            Icon(
+                painter = painterResource(id = R.drawable.star),
+                contentDescription = null,
+                tint = MaterialTheme.colors.onSurface
+            )
             Spacer(modifier = Modifier.width(12.dp))
             user?.birthday?.let {
-                Text(text = parsingDate(it))
+                Text(text = parsingDate(it), color = MaterialTheme.colors.onSurface)
                 Text(
                     modifier = Modifier.weight(1f),
                     text = "${getAge(it)} лет",
@@ -84,7 +99,11 @@ fun DetailsScreen(navController: NavController, userId: String, viewModel: MainV
 
         }
         Row(modifier = Modifier.padding(16.dp)) {
-            Icon(painter = painterResource(id = R.drawable.phone), contentDescription = null)
+            Icon(
+                painter = painterResource(id = R.drawable.phone),
+                contentDescription = null,
+                tint = MaterialTheme.colors.onSurface
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 modifier = Modifier.clickable {
@@ -95,7 +114,8 @@ fun DetailsScreen(navController: NavController, userId: String, viewModel: MainV
                         )
                     )
                 },
-                text = "${user?.phone}"
+                text = "${user?.phone}",
+                color = MaterialTheme.colors.onSurface
             )
         }
     }

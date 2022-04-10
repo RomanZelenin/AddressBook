@@ -11,18 +11,19 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorPalette = darkColors(
     primary = Purple200,
-    primaryVariant = Purple700,
-    secondary = Teal200,
-    surface = Color(0xFFF7F7F8)
+    primaryVariant = Color(0xFF333333),
+    onSecondary = Color.White,
+    surface = Color(0xE6121212),
+    secondary = Purple500,
 )
 
 private val LightColorPalette = lightColors(
     primary = Color.White,
-    primaryVariant = Purple700,
+    primaryVariant = LightGray,
     secondary = Purple500,
     onPrimary = Purple700,
-    surface = Color(0xFFF7F7F8),
-    onSurface = Gray,
+    //surface = Color(0xFFF7F7F8),
+    onSurface = Color.Black,
     /* Other default colors to override
     background = Color.White,
     surface = Color.White,
@@ -42,12 +43,10 @@ fun AddressBookTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Compo
     }
 
     val systemUiController = rememberSystemUiController()
-    val useDarkIcons = MaterialTheme.colors.isLight
-
     SideEffect {
         systemUiController.setSystemBarsColor(
-            color = Color.Transparent,
-            darkIcons = useDarkIcons
+            color = if(!darkTheme) Color.Transparent else Color.Black,
+            darkIcons = !darkTheme
         )
     }
 

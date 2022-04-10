@@ -20,4 +20,7 @@
     <string name="by_birthday">По дню рождения</string>
     <string name="wait_a_second">Секудночку, гружусь&#8230;</string>
     <string name="failed_load_data">Не могу обновить данные. Проверь соединение с интернетом</string>
+    <string name="repeat_attempt">Попробовать снова</string>
+    <string name="fast_fix">Постараемся быстро починить</string>
+    <string name="crash">Какой-то сверхразум все сломал</string>
 </resources>

@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -19,6 +21,7 @@ import com.romazelenin.addressbook.ui.theme.Purple500
 
 @Composable
 fun ErrorScreen(navController: NavController, viewModel: MainViewModel) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -30,14 +33,14 @@ fun ErrorScreen(navController: NavController, viewModel: MainViewModel) {
             contentDescription = null
         )
         Text(
-            text = "Какой-то сверхразум все сломал",
+            text = stringResource(R.string.crash),
             fontWeight = FontWeight.SemiBold,
             color = Color.Black,
             fontSize = 17.sp
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "Постараемся быстро починить",
+            text = context.getString(R.string.fast_fix),
             color = Color.LightGray,
             fontSize = 16.sp
         )
@@ -47,7 +50,7 @@ fun ErrorScreen(navController: NavController, viewModel: MainViewModel) {
                 viewModel.refresh()
                 navController.popBackStack()
             },
-            text = "Попробовать снова",
+            text = context.getString(R.string.repeat_attempt),
             color = Purple500,
             fontSize = 16.sp
         )
