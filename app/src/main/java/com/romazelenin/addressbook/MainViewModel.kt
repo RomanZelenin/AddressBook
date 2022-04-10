@@ -1,11 +1,15 @@
 package com.romazelenin.addressbook
 
+import android.annotation.SuppressLint
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.romazelenin.addressbook.domain.UsersServiceApi
+import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -14,13 +18,16 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val usersServiceApi: UsersServiceApi) :
+class MainViewModel @Inject constructor(
+    @SuppressLint("StaticFieldLeak") @ApplicationContext private val context: Context,
+    private val usersServiceApi: UsersServiceApi
+) :
     ViewModel() {
 
     private val _usersStateFlow = MutableStateFlow<State<List<User>>>(State.Loading())
-    private var currentTypeSort = Sort.none
+    private var currentTypeSort = MutableStateFlow(Sort.none)
 
-    fun getCurrentSort() = currentTypeSort
+    fun getCurrentSort():Flow<Sort> = currentTypeSort
 
     val users: Flow<State<List<User>>> = _usersStateFlow
 
@@ -33,7 +40,7 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
             try {
                 _usersStateFlow.value = State.Loading()
                 var result = usersServiceApi.getUsers()
-                when (currentTypeSort) {
+                when (currentTypeSort.value) {
                     Sort.birthaday -> {
                         result = birthdaySort(result)
                     }
@@ -54,8 +61,8 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
     }
 
     fun sortedUsers(sort: Sort) {
-        if (currentTypeSort == sort) return
-        currentTypeSort = sort
+        if (currentTypeSort.value == sort) return
+        currentTypeSort.value = sort
 
         viewModelScope.launch {
             if (_usersStateFlow.value is State.Success) {
@@ -97,13 +104,31 @@ class MainViewModel @Inject constructor(private val usersServiceApi: UsersServic
                     parsingDate(user.birthday).date >= currentDate.date
                 }
                 belowCurDay = belowCurrentDay
-                eqOrAboveCurrentDay!!
+                eqOrAboveCurrentDay
             } else {
                 sortedListUsers[month]!!
             }
         }
         return res + belowCurDay
     }
+
+    private val departments = listOf(
+        Department.all to context.getString(R.string.all),
+        Department.android to context.getString(R.string.android),
+        Department.design to context.getString(R.string.design),
+        Department.analytics to context.getString(R.string.analytics),
+        Department.backend to context.getString(R.string.backend),
+        Department.back_office to context.getString(R.string.back_office),
+        Department.frontend to context.getString(R.string.frontend),
+        Department.hr to context.getString(R.string.hr),
+        Department.ios to context.getString(R.string.ios),
+        Department.management to context.getString(R.string.management),
+        Department.pr to context.getString(R.string.pr),
+        Department.qa to context.getString(R.string.qa),
+        Department.support to context.getString(R.string.support)
+    )
+
+    fun getDepartments() = departments
 }
 
 enum class Sort {
