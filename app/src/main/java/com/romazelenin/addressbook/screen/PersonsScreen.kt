@@ -41,9 +41,8 @@ import com.google.accompanist.placeholder.material.shimmer
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.romazelenin.addressbook.MainViewModel
+import com.romazelenin.addressbook.*
 import com.romazelenin.addressbook.R
-import com.romazelenin.addressbook.Sort
 import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
@@ -137,7 +136,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                         Icon(
                                             modifier = Modifier.offset(y = 5.dp),
                                             painter = painterResource(id = R.drawable.sorted_list),
-                                            tint = if (sortingIsClicked) MaterialTheme.colors.secondary else Color.Unspecified,
+                                            tint = /*if (sortingIsClicked) MaterialTheme.colors.secondary else*/ Color.Unspecified,
                                             contentDescription = null
                                         )
                                     }
@@ -314,7 +313,27 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             } else {
                                 when (viewModel.getCurrentSort()) {
                                     Sort.birthaday -> {
-                                        TODO()
+                                        val dateNow = getNowDate()
+                                        val indexNextYear = filteredUsers.indexOfFirst {
+                                            val birthday = parsingDate(it.birthday)
+                                            ((birthday.month <= dateNow.month && birthday.date < dateNow.date) || (birthday.month < dateNow.month))
+                                        }
+                                        itemsIndexed(filteredUsers) { index, item ->
+                                            Column() {
+                                                if (indexNextYear == index) {
+                                                    Text(
+                                                        text = "${getNextYear()}",
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                                UserItem(
+                                                    navController = navController,
+                                                    user = item,
+                                                    showBirthday = true
+                                                )
+                                            }
+                                        }
                                     }
                                     Sort.alphabet -> {
                                         filteredUsers.groupBy { it.firstName.uppercase().first() }
@@ -359,7 +378,9 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
 @Composable
 private fun EmptyResultPage(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxSize().padding(top = 48.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -386,7 +407,12 @@ private fun EmptyResultPage(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun UserItem(modifier: Modifier = Modifier, navController: NavController, user: User) {
+private fun UserItem(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    user: User,
+    showBirthday: Boolean = false
+) {
     ListItem(
         modifier = modifier.clickable { navController.navigate("details/${user.id}") },
         icon = {
@@ -418,6 +444,14 @@ private fun UserItem(modifier: Modifier = Modifier, navController: NavController
                 color = Color.LightGray,
                 fontSize = 12.sp
             )
+            if (showBirthday) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = "${formatDate(user.birthday, format = "d MMM")}",
+                    textAlign = TextAlign.End,
+                    color = Color.Gray
+                )
+            }
         }
     }
 }

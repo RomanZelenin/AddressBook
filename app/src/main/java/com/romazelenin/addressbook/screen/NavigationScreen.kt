@@ -1,5 +1,6 @@
 package com.romazelenin.addressbook.screen
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
@@ -41,8 +42,7 @@ fun NavigationScreen(viewModel: MainViewModel) {
         bottomSheetNavigator,
         sheetShape = Shapes.large.copy(topStart = CornerSize(24.dp), topEnd = CornerSize(24.dp))
     ) {
-        var selectedSortedState by rememberSaveable { mutableStateOf(true) }
-
+        var selectedSortedState by rememberSaveable { mutableStateOf(-1) }
         NavHost(navController = navController, startDestination = NavigatorDestenation.users.name) {
             composable(NavigatorDestenation.users.name) {
                 PersonsScreen(navController = navController, viewModel = viewModel)
@@ -61,9 +61,6 @@ fun NavigationScreen(viewModel: MainViewModel) {
                 )
             }
             bottomSheet(NavigatorDestenation.sorting.name) {
-                LaunchedEffect(bottomSheetNavigator) {
-                    viewModel.sortedUsers(Sort.alphabet)
-                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -82,45 +79,27 @@ fun NavigationScreen(viewModel: MainViewModel) {
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedSortedState = true
-                                viewModel.sortedUsers(Sort.alphabet)
-                            }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedSortedState,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = context.getString(R.string.alphabetically),
-                            color = Color.Black
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedSortedState = false
-                                viewModel.sortedUsers(Sort.birthaday)
-                            }
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = !selectedSortedState,
-                            onClick = null
-                        )
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(
-                            text = context.getString(R.string.by_birthday),
-                            color = Color.Black
-                        )
+                    sortTypes.forEachIndexed { index, item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedSortedState = index
+                                    viewModel.sortedUsers(item.sort)
+                                }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = selectedSortedState == index,
+                                onClick = null
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = context.getString(item.label),
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
             }
@@ -128,6 +107,13 @@ fun NavigationScreen(viewModel: MainViewModel) {
     }
 }
 
-enum class NavigatorDestenation{
+enum class NavigatorDestenation {
     users, error, details, sorting
 }
+
+data class ItemSort(val sort: Sort, @StringRes val label: Int, val selected: Boolean)
+
+val sortTypes = listOf(
+    ItemSort(Sort.alphabet, R.string.alphabetically, false),
+    ItemSort(Sort.birthaday, R.string.by_birthday, false)
+)

@@ -24,7 +24,7 @@ import coil.compose.AsyncImage
 import com.romazelenin.addressbook.MainViewModel
 import com.romazelenin.addressbook.R
 import com.romazelenin.addressbook.getAge
-import com.romazelenin.addressbook.parsingDate
+import com.romazelenin.addressbook.formatDate
 import com.romazelenin.addressbook.ui.theme.AddressBookTheme
 
 @Composable
@@ -88,7 +88,7 @@ fun DetailsScreen(navController: NavController, userId: String, viewModel: MainV
             )
             Spacer(modifier = Modifier.width(12.dp))
             user?.birthday?.let {
-                Text(text = parsingDate(it), color = MaterialTheme.colors.onSurface)
+                Text(text = formatDate(it), color = MaterialTheme.colors.onSurface)
                 Text(
                     modifier = Modifier.weight(1f),
                     text = "${getAge(it)} лет",
