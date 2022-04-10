@@ -60,27 +60,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
 
     val pagerState = rememberPagerState()
     val context = LocalContext.current
-    val pages = remember {
-        listOf(
-            Department.all to context.getString(R.string.all),
-            Department.android to context.getString(R.string.android),
-            Department.design to context.getString(R.string.design),
-            Department.analytics to context.getString(R.string.analytics),
-            Department.backend to context.getString(R.string.backend),
-            Department.back_office to context.getString(R.string.back_office),
-            Department.frontend to context.getString(R.string.frontend),
-            Department.hr to context.getString(R.string.hr),
-            Department.ios to context.getString(R.string.ios),
-            Department.management to context.getString(R.string.management),
-            Department.pr to context.getString(R.string.pr),
-            Department.qa to context.getString(R.string.qa),
-            Department.support to context.getString(R.string.support)
-        )
-    }
+    val pages = viewModel.getDepartments()
     val users by viewModel.users.collectAsState(initial = State.Loading())
+    val selectedSort by viewModel.getCurrentSort().collectAsState(initial = Sort.none)
     var query by remember { mutableStateOf("") }
     var searchFieldIsFocused by remember { mutableStateOf(false) }
-    var sortingIsClicked by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     var isFirstStartSuccess = rememberSaveable { false }
     val scaffoldState = rememberScaffoldState()
@@ -129,13 +113,12 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             trailingIcon = {
                                 if (!searchFieldIsFocused) {
                                     IconButton(onClick = {
-                                        sortingIsClicked = true
-                                        navController.navigate("sorting")
+                                        navController.navigate(NavigatorDestenation.sorting.name)
                                     }) {
                                         Icon(
                                             modifier = Modifier.offset(y = 5.dp),
                                             painter = painterResource(id = R.drawable.sorted_list),
-                                            tint = /*if (sortingIsClicked) MaterialTheme.colors.secondary else*/ Color.Unspecified,
+                                            tint = if (selectedSort != Sort.none) MaterialTheme.colors.secondary else Color.Unspecified,
                                             contentDescription = null
                                         )
                                     }
@@ -210,7 +193,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                     when (users) {
                         is State.Failed -> {
                             if (!isFirstStartSuccess) {
-                                navController.navigate("error") {
+                                navController.navigate(NavigatorDestenation.error.name) {
                                     launchSingleTop = true
                                 }
                             } else {
@@ -310,7 +293,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             if (filteredUsers.isEmpty()) {
                                 item { EmptyResultPage() }
                             } else {
-                                when (viewModel.getCurrentSort()) {
+                                when (selectedSort) {
                                     Sort.birthaday -> {
                                         val dateNow = getNowDate()
                                         val indexNextYear = filteredUsers.indexOfFirst {
@@ -453,7 +436,7 @@ private fun UserItem(
     showBirthday: Boolean = false
 ) {
     ListItem(
-        modifier = modifier.clickable { navController.navigate("details/${user.id}") },
+        modifier = modifier.clickable { navController.navigate("${NavigatorDestenation.details.name}/${user.id}") },
         icon = {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -486,7 +469,7 @@ private fun UserItem(
             if (showBirthday) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "${formatDate(user.birthday, format = "d MMM")}",
+                    text = formatDate(user.birthday, format = "d MMM"),
                     textAlign = TextAlign.End,
                     color = Color.Gray
                 )
