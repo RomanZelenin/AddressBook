@@ -2,11 +2,12 @@ package com.romazelenin.addressbook.screen
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +32,9 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.shimmer
+import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.romazelenin.addressbook.MainViewModel
@@ -38,9 +42,8 @@ import com.romazelenin.addressbook.R
 import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
-import com.romazelenin.addressbook.ui.theme.AddressBookTheme
-import com.romazelenin.addressbook.ui.theme.Gray
-import com.romazelenin.addressbook.ui.theme.Purple500
+import com.romazelenin.addressbook.ui.theme.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
@@ -70,104 +73,120 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     }
     val users by viewModel.users.collectAsState(initial = State.Loading())
     var query by remember { mutableStateOf("") }
-    var searchIsFocused by remember { mutableStateOf(false) }
+    var searchFieldIsFocused by remember { mutableStateOf(false) }
+    var sortingIsClicked by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    var isFirstStartSuccess = rememberSaveable { false }
+    val scaffoldState = rememberScaffoldState()
+    val scope = rememberCoroutineScope()
+    var job = remember<Job?> { null }
+    var backgroundColorSnackbar by remember { mutableStateOf(Color.Red) }
 
-    Scaffold(topBar = {
-        Column {
-            TopAppBar() {
-                Box(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        shape = RoundedCornerShape(36.dp)
-                    ) {}
-                    TextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onFocusEvent { searchIsFocused = it.isFocused },
-                        leadingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.search),
-                                contentDescription = null,
-                                tint = if (searchIsFocused) Color.Black else Gray
-                            )
-                        },
-                        trailingIcon = {
-                            var sortingIsClicked by rememberSaveable { mutableStateOf(false) }
-                            if (!searchIsFocused) {
-                                IconButton(onClick = {
-                                    sortingIsClicked = true
-                                    navController.navigate("sorting")
-                                }) {
-                                    Icon(
-                                        modifier = Modifier.offset(y = 5.dp),
-                                        painter = painterResource(id = R.drawable.sorted_list),
-                                        contentDescription = null,
-                                        tint = if (sortingIsClicked) Purple500 else Color.Unspecified
-                                    )
-                                }
-                            } else {
-                                if (query.isNotEmpty()) {
-                                    IconButton(onClick = { query = "" }) {
+    Scaffold(
+        scaffoldState = scaffoldState,
+        snackbarHost = {
+            SnackbarHost(hostState = it) { data ->
+                Snackbar(
+                    modifier = Modifier,
+                    snackbarData = data,
+                    backgroundColor = backgroundColorSnackbar
+                )
+            }
+        },
+        topBar = {
+            Column {
+                TopAppBar {
+                    Box(
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp)
+                                .background(
+                                    color = LightGray,
+                                    shape = Shapes.small.copy(CornerSize(50))
+                                )
+                        )
+                        TextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusEvent { searchFieldIsFocused = it.isFocused },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.search),
+                                    tint = if (searchFieldIsFocused) MaterialTheme.colors.onSurface else Gray,
+                                    contentDescription = null
+                                )
+                            },
+                            trailingIcon = {
+                                if (!searchFieldIsFocused) {
+                                    IconButton(onClick = {
+                                        sortingIsClicked = true
+                                        navController.navigate("sorting")
+                                    }) {
                                         Icon(
-                                            painter = painterResource(id = R.drawable.ic_baseline_clear_24),
-                                            contentDescription = null,
-                                            tint = Color.LightGray
+                                            modifier = Modifier.offset(y = 5.dp),
+                                            painter = painterResource(id = R.drawable.sorted_list),
+                                            tint = if (sortingIsClicked) MaterialTheme.colors.secondary else Color.Unspecified,
+                                            contentDescription = null
                                         )
                                     }
+                                } else {
+                                    if (query.isNotEmpty()) {
+                                        IconButton(onClick = { query = "" }) {
+                                            Icon(
+                                                painter = painterResource(id = R.drawable.ic_baseline_clear_24),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colors.onSurface
+                                            )
+                                        }
+                                    }
                                 }
-                            }
-                        },
-                        placeholder = { Text(text = stringResource(R.string.search_placeholder_text)) },
-                        colors = TextFieldDefaults.textFieldColors(
-                            textColor = Color.Black,
-                            backgroundColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colors.onPrimary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                        singleLine = true,
-                        value = query,
-                        onValueChange = { query = it.trimStart() }
-                    )
-                }
-            }
-
-            ScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
-                    )
-                }) {
-                val scope = rememberCoroutineScope()
-                pages.forEachIndexed { index, department ->
-                    Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = {
-                            scope.launch { pagerState.scrollToPage(page = index) }
-                        },
-                        selectedContentColor = Color.Black,
-                        unselectedContentColor = Gray
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(8.dp),
-                            text = department.second,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
+                            },
+                            placeholder = { Text(text = stringResource(R.string.search_placeholder_text)) },
+                            colors = TextFieldDefaults.textFieldColors(
+                                textColor = MaterialTheme.colors.onSurface,
+                                backgroundColor = Color.Transparent,
+                                cursorColor = MaterialTheme.colors.onSurface,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            singleLine = true,
+                            value = query,
+                            onValueChange = { query = it.trimStart() }
                         )
                     }
                 }
-            }
-        }
-    }) {
-        val swipeRefreshState = rememberSwipeRefreshState(users is State.Loading)
 
+                ScrollableTabRow(
+                    selectedTabIndex = pagerState.currentPage,
+                    indicator = { tabPositions ->
+                        TabRowDefaults.Indicator(
+                            Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
+                        )
+                    }) {
+                    pages.forEachIndexed { index, department ->
+                        Tab(
+                            selected = pagerState.currentPage == index,
+                            onClick = {
+                                scope.launch { pagerState.scrollToPage(page = index) }
+                            },
+                            selectedContentColor = MaterialTheme.colors.onSurface,
+                            unselectedContentColor = Gray
+                        ) {
+                            Text(
+                                modifier = Modifier.padding(8.dp),
+                                text = department.second,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }) {
         HorizontalPager(
             modifier = Modifier.motionEventSpy {
                 if (it.action == MotionEvent.ACTION_DOWN) {
@@ -177,67 +196,95 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
             count = pages.size,
             state = pagerState
         ) { page ->
-            SwipeRefresh(state = swipeRefreshState, onRefresh = { viewModel.refresh() }) {
+            SwipeRefresh(
+                state = rememberSwipeRefreshState(users is State.Loading),
+                onRefresh = { viewModel.refresh() }
+            ) {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     when (users) {
                         is State.Failed -> {
-                            navController.navigate("error") {
-                                launchSingleTop = true
+                            if (!isFirstStartSuccess) {
+                                navController.navigate("error") {
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                job?.cancel()
+                                job = scope.launch {
+                                    backgroundColorSnackbar = Color.Red
+                                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.failed_load_data))
+                                }
                             }
                         }
                         is State.Loading -> {
-                            /*  var visibilityShimmer = true
-                              items(5) {
-                                   ListItem(
-                                       icon = {
-                                           AsyncImage(
-                                               modifier = Modifier.placeholder(
-                                                   visible = visibilityShimmer,
-                                                   highlight = PlaceholderHighlight.shimmer(),
-                                               ),
-                                               model = null,
-                                               placeholder = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                               error = painterResource(id = R.drawable.ic_baseline_person_outline_24),
-                                               contentDescription = null
-                                           )
-                                       },
-                                       secondaryText = {
-                                           Text(
-                                               modifier = Modifier.placeholder(
-                                                   visible = visibilityShimmer,
-                                                   highlight = PlaceholderHighlight.shimmer(),
-                                               ),
-                                               text = "Content to display",
-                                               color = Color.Gray
-                                           )
-                                       }
-                                   ) {
-                                       Row(verticalAlignment = Alignment.CenterVertically) {
-                                           Text(
-                                               modifier = Modifier.placeholder(
-                                                   visible = visibilityShimmer,
-                                                   highlight = PlaceholderHighlight.shimmer(),
-                                               ),
-                                               text = "Content to display after content has loaded",
-                                               color = Color.Black
-                                           )
-                                           Spacer(modifier = Modifier.width(2.dp))
-                                           Text(
-                                               modifier = Modifier.placeholder(
-                                                   visible = visibilityShimmer,
-                                                   highlight = PlaceholderHighlight.shimmer(),
-                                               ),
-                                               text = "Content to display after content has loaded",
-                                               color = Color.LightGray,
-                                               fontSize = 12.sp
-                                           )
-                                       }
-
-                                   }
-
-                              }*/
+                            if (isFirstStartSuccess) {
+                                if (job?.isActive != true) {
+                                    job = scope.launch {
+                                        backgroundColorSnackbar = Purple500
+                                        scaffoldState.snackbarHostState
+                                            .showSnackbar(context.getString(R.string.wait_a_second))
+                                    }
+                                }
+                            }
+                            val visibilityShimmer = true
+                            items(7) {
+                                Row(modifier = Modifier.padding(16.dp)) {
+                                    Icon(
+                                        modifier = Modifier
+                                            .placeholder(
+                                                visible = visibilityShimmer,
+                                                highlight = PlaceholderHighlight.shimmer(),
+                                                color = LightGray,
+                                                shape = Shapes.small
+                                            )
+                                            .size(36.dp),
+                                        painter = painterResource(id = R.drawable.ic_baseline_person_outline_24),
+                                        contentDescription = null
+                                    )
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Column {
+                                        Row {
+                                            Text(
+                                                modifier = Modifier.placeholder(
+                                                    visible = visibilityShimmer,
+                                                    highlight = PlaceholderHighlight.shimmer(),
+                                                    color = LightGray,
+                                                    shape = Shapes.small
+                                                ),
+                                                text = "Roman Zelenin",
+                                                color = Color.Black
+                                            )
+                                            Spacer(modifier = Modifier.width(2.dp))
+                                            Text(
+                                                modifier = Modifier.placeholder(
+                                                    visible = visibilityShimmer,
+                                                    highlight = PlaceholderHighlight.shimmer(),
+                                                    color = LightGray,
+                                                    shape = Shapes.small
+                                                ),
+                                                text = "rz",
+                                                color = Color.LightGray,
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            modifier = Modifier.placeholder(
+                                                visible = visibilityShimmer,
+                                                highlight = PlaceholderHighlight.shimmer(),
+                                                color = LightGray,
+                                                shape = Shapes.small
+                                            ),
+                                            text = "Developer",
+                                            color = Color.Black
+                                        )
+                                    }
+                                }
+                            }
                         }
                         is State.Success -> {
+                            isFirstStartSuccess = true
+                            job?.cancel()
+
                             var filteredUsers = if (pages[page].first != Department.all) {
                                 (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
                             } else {
@@ -250,8 +297,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                     (it.firstName + " " + it.lastName).contains(
                                         clearedQuery,
                                         true
-                                    ) ||
-                                            it.userTag.contains(clearedQuery, true)
+                                    ) || it.userTag.contains(clearedQuery, true)
                                 }
                             }
 
@@ -279,7 +325,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = "${it.firstName} ${it.lastName}",
-                                            color = Color.Black
+                                            color = MaterialTheme.colors.onSurface
                                         )
                                         Spacer(modifier = Modifier.width(2.dp))
                                         Text(
@@ -290,7 +336,6 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                     }
                                 }
                             }
-
                         }
                     }
                 }
