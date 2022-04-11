@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.romazelenin.addressbook.domain.UserRepository
 import com.romazelenin.addressbook.domain.UsersServiceApi
 import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
@@ -20,7 +21,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @SuppressLint("StaticFieldLeak") @ApplicationContext private val context: Context,
-    private val usersServiceApi: UsersServiceApi
+    private val usersServiceApi: UsersServiceApi,
+    private val userRepository: UserRepository
 ) :
     ViewModel() {
 

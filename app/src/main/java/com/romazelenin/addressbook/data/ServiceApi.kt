@@ -1,6 +1,5 @@
 package com.romazelenin.addressbook.data
 
-import com.romazelenin.addressbook.domain.entity.User
 import retrofit2.http.GET
 
 interface ServiceApi {
@@ -9,4 +8,4 @@ interface ServiceApi {
     suspend fun getUsers():Response
 }
 
-data class Response(val items:List<User>)
+data class Response(val items:List<EntityUser>)
