@@ -5,61 +5,70 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.romazelenin.addressbook.domain.UserRepository
-import com.romazelenin.addressbook.domain.UsersServiceApi
 import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @SuppressLint("StaticFieldLeak") @ApplicationContext private val context: Context,
-    private val usersServiceApi: UsersServiceApi,
     private val userRepository: UserRepository
 ) :
     ViewModel() {
 
-    private val _usersStateFlow = MutableStateFlow<State<List<User>>>(State.Loading())
+    private val _usersStateFlow = MutableStateFlow<State<out List<User>>>(State.Loading)
     private var currentTypeSort = MutableStateFlow(Sort.none)
+    private var collectLatestUsersJob: Job? = null
 
-    fun getCurrentSort():Flow<Sort> = currentTypeSort
+    fun getCurrentSort(): Flow<Sort> = currentTypeSort
 
-    val users: Flow<State<List<User>>> = _usersStateFlow
+    val users: Flow<State<out List<User>>> = _usersStateFlow
 
     init {
         refresh()
     }
 
     fun refresh() {
-        viewModelScope.launch {
-            try {
-                _usersStateFlow.value = State.Loading()
-                var result = usersServiceApi.getUsers()
-                when (currentTypeSort.value) {
-                    Sort.birthaday -> {
-                        result = birthdaySort(result)
+        collectLatestUsersJob?.cancel()
+        collectLatestUsersJob = viewModelScope.launch {
+            userRepository.getAllUsers()
+                .collectLatest { result ->
+                    _usersStateFlow.value = when (result) {
+                        is State.Failed -> {
+                            delay(500)
+                            result
+                        }
+                        is State.Loading -> {
+                            result
+                        }
+                        is State.Success -> {
+                            delay(500)
+                            when (currentTypeSort.value) {
+                                Sort.birthaday -> {
+                                    State.Success(birthdaySort(result.data))
+                                }
+                                Sort.alphabet -> {
+                                    State.Success(result.data.sortedBy { it.firstName + " " + it.lastName })
+                                }
+                                Sort.none -> {
+                                    result
+                                }
+                            }
+                        }
                     }
-                    Sort.alphabet -> {
-                        result = result.sortedBy { it.firstName + " " + it.lastName }
-                    }
-                    Sort.none -> {}
                 }
-                _usersStateFlow.value = State.Success(result)
-            } catch (e: Throwable) {
-                _usersStateFlow.value = State.Failed(e, null)
-            }
         }
     }
 
-    fun getUser(userId: String): Flow<User?> {
-        return users.map { (it as State.Success).data.firstOrNull { it.id == userId } }
+    fun getUser(userId: String): Flow<User> {
+        return userRepository.getUserById(userId)
     }
 
     fun sortedUsers(sort: Sort) {

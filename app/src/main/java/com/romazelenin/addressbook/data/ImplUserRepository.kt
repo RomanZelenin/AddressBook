@@ -29,9 +29,9 @@ class ImplUserRepository @Inject constructor(
         userDao.delete(user.toEntityUser())
     }
 
-    override fun getAllUsers(): Flow<State<List<User>>> {
+    override fun getAllUsers(): Flow<State<out List<User>>> {
         return flow {
-            emit(State.Loading())
+            emit(State.Loading)
             val users = usersServiceApi.getUsers()
             appDatabase.withTransaction {
                 users.forEach { insert(it) }

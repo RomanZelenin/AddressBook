@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -46,7 +45,6 @@ import com.romazelenin.addressbook.domain.entity.Department
 import com.romazelenin.addressbook.domain.entity.State
 import com.romazelenin.addressbook.domain.entity.User
 import com.romazelenin.addressbook.ui.theme.*
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 
@@ -61,16 +59,15 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     val pagerState = rememberPagerState()
     val context = LocalContext.current
     val pages = viewModel.getDepartments()
-    val users by viewModel.users.collectAsState(initial = State.Loading())
+    val users by viewModel.users.collectAsState(initial = State.Loading)
     val selectedSort by viewModel.getCurrentSort().collectAsState(initial = Sort.none)
     var query by remember { mutableStateOf("") }
     var searchFieldIsFocused by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    var isFirstStartSuccess = rememberSaveable { false }
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    var job = remember<Job?> { null }
     var backgroundColorSnackbar by remember { mutableStateOf(Color.Red) }
+    val swipeRefreshState = rememberSwipeRefreshState(users is State.Loading)
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -114,7 +111,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 if (!searchFieldIsFocused) {
                                     IconButton(onClick = {
                                         navController.navigate(NavigatorDestenation.sorting.name)
-                                    }) {
+                                    }, enabled = !swipeRefreshState.isRefreshing) {
                                         Icon(
                                             modifier = Modifier.offset(y = 5.dp),
                                             painter = painterResource(id = R.drawable.sorted_list),
@@ -141,14 +138,15 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 cursorColor = MaterialTheme.colors.onSurface,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
                             ),
                             singleLine = true,
                             value = query,
-                            onValueChange = { query = it.trimStart() }
+                            onValueChange = { query = it.trimStart() },
+                            enabled = !swipeRefreshState.isRefreshing
                         )
                     }
                 }
-
                 ScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     indicator = { tabPositions ->
@@ -158,6 +156,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                     }) {
                     pages.forEachIndexed { index, department ->
                         Tab(
+                            enabled = !swipeRefreshState.isRefreshing,
                             selected = pagerState.currentPage == index,
                             onClick = {
                                 scope.launch { pagerState.scrollToPage(page = index) }
@@ -176,44 +175,42 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                 }
             }
         }) {
-        HorizontalPager(
-            modifier = Modifier.motionEventSpy {
-                if (it.action == MotionEvent.ACTION_DOWN) {
-                    focusManager.clearFocus()
+        SwipeRefresh(
+            state = swipeRefreshState,
+            onRefresh = { viewModel.refresh() }
+        ) {
+            //-------------------------------------------------------------
+            if (swipeRefreshState.isRefreshing) {
+                LaunchedEffect(Unit) {
+                    backgroundColorSnackbar = Purple500
+                    scaffoldState.snackbarHostState
+                        .showSnackbar(
+                            context.getString(R.string.wait_a_second),
+                            duration = SnackbarDuration.Indefinite
+                        )
                 }
-            },
-            count = pages.size,
-            state = pagerState
-        ) { page ->
-            SwipeRefresh(
-                state = rememberSwipeRefreshState(users is State.Loading),
-                onRefresh = { viewModel.refresh() }
-            ) {
+            } else {
+                if (users is State.Failed) {
+                    LaunchedEffect(Unit) {
+                        backgroundColorSnackbar = Color.Red
+                        scaffoldState.snackbarHostState
+                            .showSnackbar(context.getString(R.string.failed_load_data))
+                    }
+                }
+            }
+            //----------------------------------------------
+            HorizontalPager(
+                modifier = Modifier.motionEventSpy {
+                    if (it.action == MotionEvent.ACTION_DOWN) {
+                        focusManager.clearFocus()
+                    }
+                },
+                count = pages.size,
+                state = pagerState
+            ) { page ->
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     when (users) {
-                        is State.Failed -> {
-                            if (!isFirstStartSuccess) {
-                                navController.navigate(NavigatorDestenation.error.name) {
-                                    launchSingleTop = true
-                                }
-                            } else {
-                                job?.cancel()
-                                job = scope.launch {
-                                    backgroundColorSnackbar = Color.Red
-                                    scaffoldState.snackbarHostState.showSnackbar(context.getString(R.string.failed_load_data))
-                                }
-                            }
-                        }
                         is State.Loading -> {
-                            if (isFirstStartSuccess) {
-                                if (job?.isActive != true) {
-                                    job = scope.launch {
-                                        backgroundColorSnackbar = Purple500
-                                        scaffoldState.snackbarHostState
-                                            .showSnackbar(context.getString(R.string.wait_a_second))
-                                    }
-                                }
-                            }
                             val visibilityShimmer = true
                             items(7) {
                                 Row(modifier = Modifier.padding(16.dp)) {
@@ -270,14 +267,13 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 }
                             }
                         }
-                        is State.Success -> {
-                            isFirstStartSuccess = true
-                            job?.cancel()
-
+                        is State.Success, is State.Failed -> {
                             var filteredUsers = if (pages[page].first != Department.all) {
-                                (users as State.Success<List<User>>).data.filter { it.department == pages[page].first }
+                                if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data.filter { it.department == pages[page].first }
+                                else (users as State.Failed<out List<User>>).data!!.filter { it.department == pages[page].first }
                             } else {
-                                (users as State.Success<List<User>>).data
+                                if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data
+                                else (users as State.Failed<out List<User>>).data!!
                             }
 
                             if (query.isNotEmpty()) {
@@ -288,11 +284,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                         true
                                     ) || it.userTag.contains(clearedQuery, true)
                                 }
+                                if (filteredUsers.isEmpty()) {
+                                    item { EmptyResultPage() }
+                                }
                             }
-
-                            if (filteredUsers.isEmpty()) {
-                                item { EmptyResultPage() }
-                            } else {
+                            if (filteredUsers.isNotEmpty()) {
                                 when (selectedSort) {
                                     Sort.birthaday -> {
                                         val dateNow = getNowDate()
@@ -347,6 +343,8 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                         }
                                     }
                                 }
+                            } else {
+                                //TODO: Show empty list
                             }
                         }
                     }

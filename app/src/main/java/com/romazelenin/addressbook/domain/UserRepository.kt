@@ -12,7 +12,7 @@ interface UserRepository {
 
     suspend fun delete(user: User)
 
-    fun getAllUsers(): Flow<State<List<User>>>
+    fun getAllUsers(): Flow<State<out List<User>>>
 
     fun getUserById(userId: String): Flow<User>
 
