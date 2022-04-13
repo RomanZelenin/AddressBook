@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -208,7 +209,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                 count = pages.size,
                 state = pagerState
             ) { page ->
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                val lazyListState = rememberLazyListState()
+                LaunchedEffect(selectedSort){
+                    lazyListState.scrollToItem(0)
+                }
+                LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
                     when (users) {
                         is State.Loading -> {
                             val visibilityShimmer = true
@@ -275,7 +280,6 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                                 if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data
                                 else (users as State.Failed<out List<User>>).data!!
                             }
-
                             if (query.isNotEmpty()) {
                                 val clearedQuery = query.trimEnd()
                                 filteredUsers = filteredUsers.filter {
