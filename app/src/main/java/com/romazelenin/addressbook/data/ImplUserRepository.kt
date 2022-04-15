@@ -32,23 +32,43 @@ class ImplUserRepository @Inject constructor(
     override fun getAllUsers(): Flow<State<out List<User>>> {
         return flow {
             emit(State.Loading)
-            val users = usersServiceApi.getUsers()
-            appDatabase.withTransaction {
-                users.forEach { insert(it) }
+            if(cache){
+                val users = usersServiceApi.getUsers()
+                appDatabase.withTransaction {
+                    users.forEach { insert(it) }
+                }
+                cache = false
             }
-            emitAll(userDao.getAllUsers().flatMapConcat { flowOf(State.Success(it.map { it.toUser() })) })
-        }.catch { throwable->
-            emitAll(userDao.getAllUsers().flatMapConcat { flowOf(State.Failed(throwable,it.map { it.toUser() })) })
+            emitAll(
+                userDao.getAllUsers()
+                    .flatMapConcat { flowOf(State.Success(it.map { it.toUser() })) })
+        }.catch { throwable ->
+            emitAll(
+                userDao.getAllUsers()
+                    .flatMapConcat { flowOf(State.Failed(throwable, it.map { it.toUser() })) })
         }
     }
 
-    override fun getUserById(userId: String): Flow<User> {
-        return userDao.getUserById(userId).map { it.toUser() }
+    override fun getUserById(userId: String): Flow<State<out User>> {
+        return flow {
+            emitAll(userDao.getUserById(userId).map { State.Success(it.toUser()) })
+        }
     }
 
     override fun searchUser(query: String): Flow<List<User>> {
         return userDao.searchUser(query).flatMapConcat { flowOf(it.map { it.toUser() }) }
     }
+
+    private var cache = true
+    override fun setCache(isCaching: Boolean) {
+        cache = isCaching
+    }
+
+    override fun isCached(): Boolean {
+        return cache
+    }
+
+
 }
 
 fun User.toEntityUser(): EntityUser {

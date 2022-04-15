@@ -1,7 +1,7 @@
 package com.romazelenin.addressbook.di
 
-import com.romazelenin.addressbook.data.ImplUsersServiceApi
-import com.romazelenin.addressbook.data.ServiceApi
+import com.romazelenin.addressbook.data.remote.ImplUsersServiceApi
+import com.romazelenin.addressbook.data.remote.ServiceApi
 import com.romazelenin.addressbook.domain.UsersServiceApi
 import dagger.Module
 import dagger.Provides

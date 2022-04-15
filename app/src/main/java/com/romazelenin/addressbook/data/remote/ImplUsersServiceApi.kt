@@ -1,5 +1,6 @@
-package com.romazelenin.addressbook.data
+package com.romazelenin.addressbook.data.remote
 
+import com.romazelenin.addressbook.data.toUser
 import com.romazelenin.addressbook.domain.entity.User
 import com.romazelenin.addressbook.domain.UsersServiceApi
 import javax.inject.Inject

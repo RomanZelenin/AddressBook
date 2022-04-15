@@ -51,7 +51,8 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @OptIn(
-    ExperimentalPagerApi::class, ExperimentalComposeUiApi::class,
+    ExperimentalPagerApi::class,
+    ExperimentalComposeUiApi::class,
     ExperimentalFoundationApi::class
 )
 @Composable
@@ -59,7 +60,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
 
     val pagerState = rememberPagerState()
     val context = LocalContext.current
-    val pages = viewModel.getDepartments()
+    val pages by viewModel.getDepartments().collectAsState(initial = emptyList())
     val users by viewModel.users.collectAsState(initial = State.Loading)
     val selectedSort by viewModel.getCurrentSort().collectAsState(initial = Sort.none)
     var query by remember { mutableStateOf("") }
@@ -68,7 +69,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     var backgroundColorSnackbar by remember { mutableStateOf(Color.Red) }
-    val swipeRefreshState = rememberSwipeRefreshState(users is State.Loading)
+    val swipeRefreshState = rememberSwipeRefreshState(false)
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -167,7 +168,7 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                         ) {
                             Text(
                                 modifier = Modifier.padding(8.dp),
-                                text = department.second,
+                                text = department.name,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp
                             )
@@ -191,13 +192,13 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                         )
                 }
             } else {
-                if (users is State.Failed) {
-                    LaunchedEffect(Unit) {
-                        backgroundColorSnackbar = Color.Red
-                        scaffoldState.snackbarHostState
-                            .showSnackbar(context.getString(R.string.failed_load_data))
-                    }
-                }
+                /*   if (users is State.Failed) {
+                       LaunchedEffect(Unit) {
+                           backgroundColorSnackbar = Color.Red
+                           scaffoldState.snackbarHostState
+                               .showSnackbar(context.getString(R.string.failed_load_data))
+                       }
+                   }*/
             }
             //----------------------------------------------
             HorizontalPager(
@@ -208,14 +209,16 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                 },
                 count = pages.size,
                 state = pagerState
-            ) { page ->
+            ) {page->
                 val lazyListState = rememberLazyListState()
-                LaunchedEffect(selectedSort){
+                LaunchedEffect(selectedSort) {
                     lazyListState.scrollToItem(0)
                 }
                 LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
                     when (users) {
                         is State.Loading -> {
+                            swipeRefreshState.isRefreshing = viewModel.isCached()
+
                             val visibilityShimmer = true
                             items(7) {
                                 Row(modifier = Modifier.padding(16.dp)) {
@@ -273,9 +276,11 @@ fun PersonsScreen(navController: NavController, viewModel: MainViewModel) {
                             }
                         }
                         is State.Success, is State.Failed -> {
-                            var filteredUsers = if (pages[page].first != Department.all) {
-                                if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data.filter { it.department == pages[page].first }
-                                else (users as State.Failed<out List<User>>).data!!.filter { it.department == pages[page].first }
+                            swipeRefreshState.isRefreshing = viewModel.isCached()
+
+                            var filteredUsers = if (pages[page].label != Department.all.name) {
+                                if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data.filter { it.department.name == pages[page].label }
+                                else (users as State.Failed<out List<User>>).data!!.filter { it.department.name == pages[page].label }
                             } else {
                                 if ((users is State.Success<out List<User>>)) (users as State.Success<out List<User>>).data
                                 else (users as State.Failed<out List<User>>).data!!

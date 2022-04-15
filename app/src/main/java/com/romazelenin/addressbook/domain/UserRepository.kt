@@ -14,8 +14,11 @@ interface UserRepository {
 
     fun getAllUsers(): Flow<State<out List<User>>>
 
-    fun getUserById(userId: String): Flow<User>
+    fun getUserById(userId: String): Flow<State<out User>>
 
     fun searchUser(query: String): Flow<List<User>>
 
+    fun setCache(isCaching:Boolean)
+
+    fun isCached():Boolean
 }
